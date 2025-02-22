@@ -1,63 +1,114 @@
 import './example.css'
-import Counter from './Counter'
-import ModalToggle from './ModalToggle'
-import AssetSelector from './AssetSelector'
 import { FunctionComponent } from 'react'
 import { useFieldPlugin } from '@storyblok/field-plugin/react'
 
+const UnitOptions = ['px', 'em', 'rem', '%', 'vw', 'vh']
+
+interface ContentModel {
+  top?: string | undefined
+  topValue?: string | undefined
+  right?: string | undefined
+  rightValue?: string | undefined
+  bottom?: string | undefined
+  bottomValue?: string | undefined
+  left?: string | undefined
+  leftValue?: string | undefined
+  unit: string
+  [key: string]: string | undefined
+}
+
 const FieldPlugin: FunctionComponent = () => {
   const { type, data, actions } = useFieldPlugin({
-    enablePortalModal: true,
-    validateContent: (content: unknown) => ({
-      content: typeof content === 'number' ? content : 0,
-    }),
+    enablePortalModal: false,
   })
+
+  // data.content
+  // actions.setContent
+  // read options via actions.options
 
   if (type !== 'loaded') {
     return null
   }
 
-  const closeModal = () => {
-    actions.setModalOpen(false)
+  const model = data.content as ContentModel
+
+  const updateModel = (
+    prop: 'top' | 'right' | 'left' | 'bottom' | 'unit',
+    val: string,
+  ) => {
+    // setup the new model
+    const newModel: ContentModel = {
+      ...model,
+      unit: prop === 'unit' ? val : model.unit,
+    }
+
+    // if we're only changing a single value
+    // load the prop right in
+    if (prop !== 'unit') {
+      newModel[prop + 'Value'] = val
+    }
+
+    newModel.top =
+      newModel.topValue && newModel.topValue.length > 0
+        ? `${newModel.topValue}${newModel.unit}`
+        : undefined
+
+    newModel.left =
+      newModel.leftValue && newModel.leftValue.length > 0
+        ? `${newModel.leftValue}${newModel.unit}`
+        : undefined
+
+    newModel.right =
+      newModel.rightValue && newModel.rightValue.length > 0
+        ? `${newModel.rightValue}${newModel.unit}`
+        : undefined
+
+    newModel.bottom =
+      newModel.bottomValue && newModel.bottomValue.length > 0
+        ? `${newModel.bottomValue}${newModel.unit}`
+        : undefined
+
+    actions.setContent(newModel)
   }
 
   return (
     <div>
-      {data.isModalOpen && (
-        <button
-          type="button"
-          className="btn btn-close"
-          onClick={closeModal}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M1.75738 0.343176L0.343166 1.75739L4.58581 6.00003L0.343165 10.2427L1.75738 11.6569L6.00002 7.41424L10.2427 11.6569L11.6569 10.2427L7.41423 6.00003L11.6569 1.75739L10.2427 0.343176L6.00002 4.58582L1.75738 0.343176Z"
-              fill="#1B243F"
-            />
-          </svg>
-          <span className="sr-only">Close Modal</span>
-        </button>
-      )}
-      <div className="container">
-        <Counter
-          count={data.content}
-          onIncrease={() => actions.setContent(data.content + 1)}
+      <div className="input-group">
+        <input
+          type="text"
+          value={model.topValue}
+          onChange={(e) => updateModel('top', e.target.value)}
+          placeholder="auto"
         />
-        <hr />
-        <ModalToggle
-          isModalOpen={data.isModalOpen}
-          setModalOpen={actions.setModalOpen}
+        <input
+          type="text"
+          value={model.rightValue}
+          onChange={(e) => updateModel('right', e.target.value)}
+          placeholder="auto"
         />
-        <hr />
-        <AssetSelector selectAsset={actions.selectAsset} />
+        <input
+          type="text"
+          value={model.bottomValue}
+          onChange={(e) => updateModel('bottom', e.target.value)}
+          placeholder="auto"
+        />
+        <input
+          type="text"
+          value={model.leftValue}
+          onChange={(e) => updateModel('left', e.target.value)}
+          placeholder="auto"
+        />
+        <select onChange={(e) => updateModel('unit', e.target.value)}>
+          {UnitOptions.map((unit) => (
+            <option
+              key={unit}
+              value={unit}
+              selected={model.unit === unit}
+            >
+              {unit}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   )
