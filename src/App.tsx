@@ -1,9 +1,8 @@
-import _FieldPlugin from './components/FieldPlugin'
-import FieldPluginExample from './components/FieldPluginExample'
 import { FunctionComponent } from 'react'
+import InputWithUnit from './components/InputWithUnit'
 
 const App: FunctionComponent = () => {
-  return <FieldPluginExample />
+  return <InputWithUnit />
 }
 
 export default App

@@ -4,10 +4,3 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 5px;
 }
-
-.input-group input,
-.input-group select {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 5px;
-}
