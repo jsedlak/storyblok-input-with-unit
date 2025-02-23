@@ -1,7 +1,19 @@
 import './example.css'
-import { FunctionComponent } from 'react'
+import React, { FunctionComponent } from 'react'
 import { useFieldPlugin } from '@storyblok/field-plugin/react'
 import { ContentModel } from './ContentModel'
+import {
+  Box,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Switch,
+  TextField,
+} from '@mui/material'
+import { LinkIcon } from '@storyblok/mui'
 
 const UnitOptions = ['px', 'em', 'rem', '%', 'vw', 'vh']
 
@@ -14,6 +26,14 @@ const InputWithUnit: FunctionComponent = () => {
     enablePortalModal: false,
   })
 
+  // data.content
+  // actions.setContent
+  // read options via actions.options
+
+  if (type !== 'loaded') {
+    return null
+  }
+
   let units = UnitOptions
   if (data?.options) {
     const optionsKeys = Object.keys(data.options)
@@ -23,36 +43,18 @@ const InputWithUnit: FunctionComponent = () => {
     }
   }
 
-  // data.content
-  // actions.setContent
-  // read options via actions.options
-
-  if (type !== 'loaded') {
-    return null
+  const DefaultModel: ContentModel = {
+    topValue: '',
+    leftValue: '',
+    rightValue: '',
+    bottomValue: '',
+    locked: true,
+    unit: units.length > 0 ? units[0] : '',
   }
 
-  const model = data.content as ContentModel
+  const model = { ...DefaultModel, ...(data.content as ContentModel) }
 
-  const updateModel = (
-    prop: 'top' | 'right' | 'left' | 'bottom' | 'unit',
-    val: string,
-  ) => {
-    // setup the new model
-    const newModel: ContentModel = {
-      ...model,
-      unit: prop === 'unit' ? val : model.unit ?? units[0],
-    }
-
-    // if we're only changing a single value
-    // load the prop right in
-    if (prop !== 'unit') {
-      if (!isValidNumber(val)) {
-        return
-      }
-
-      newModel[prop + 'Value'] = val
-    }
-
+  const updateModelProps = (newModel: ContentModel) => {
     newModel.top =
       newModel.topValue && newModel.topValue.length > 0
         ? `${newModel.topValue}${newModel.unit}`
@@ -72,52 +74,131 @@ const InputWithUnit: FunctionComponent = () => {
       newModel.bottomValue && newModel.bottomValue.length > 0
         ? `${newModel.bottomValue}${newModel.unit}`
         : undefined
+  }
 
+  const updateModel = (
+    prop: 'top' | 'right' | 'left' | 'bottom' | 'unit',
+    val: string,
+  ) => {
+    // setup the new model
+    const newModel: ContentModel = {
+      ...model,
+      unit: prop === 'unit' ? val : model.unit ?? units[0],
+    }
+
+    // if we're only changing a single value
+    // load the prop right in
+    if (prop !== 'unit') {
+      if (!isValidNumber(val)) {
+        return
+      }
+
+      if (!model.locked) {
+        newModel[prop + 'Value'] = val
+      } else {
+        newModel.leftValue = val
+        newModel.topValue = val
+        newModel.rightValue = val
+        newModel.bottomValue = val
+      }
+    }
+
+    updateModelProps(newModel)
+
+    actions.setContent(newModel)
+  }
+
+  const handleSyncChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newModel = { ...model, locked: event.target.checked }
+
+    if (!event.target.checked) {
+      actions.setContent(newModel)
+      return
+    }
+
+    console.log({ newModel, model })
+    newModel.leftValue =
+      newModel.rightValue =
+      newModel.bottomValue =
+        newModel.topValue
+    updateModelProps(newModel)
     actions.setContent(newModel)
   }
 
   return (
     <div>
-      <div className="input-group">
-        <input
-          className="sb-textfield__input sb-textfield__input--default"
-          type="text"
-          value={model.topValue}
-          onChange={(e) => updateModel('top', e.target.value)}
-          placeholder="auto"
-        />
-        <input
-          className="sb-textfield__input sb-textfield__input--default"
-          type="text"
-          value={model.rightValue}
-          onChange={(e) => updateModel('right', e.target.value)}
-          placeholder="auto"
-        />
-        <input
-          className="sb-textfield__input sb-textfield__input--default"
-          type="text"
-          value={model.bottomValue}
-          onChange={(e) => updateModel('bottom', e.target.value)}
-          placeholder="auto"
-        />
-        <input
-          className="sb-textfield__input sb-textfield__input--default"
-          type="text"
-          value={model.leftValue}
-          onChange={(e) => updateModel('left', e.target.value)}
-          placeholder="auto"
-        />
-        <select onChange={(e) => updateModel('unit', e.target.value)}>
+      <div className="form-group">
+        <div className="input-group">
+          <TextField
+            size="small"
+            type="text"
+            value={model.topValue}
+            onChange={(e) => updateModel('top', e.target.value)}
+            placeholder="auto"
+          />
+          <TextField
+            size="small"
+            type="text"
+            value={model.rightValue}
+            onChange={(e) => updateModel('right', e.target.value)}
+            placeholder="auto"
+          />
+          <TextField
+            size="small"
+            type="text"
+            value={model.bottomValue}
+            onChange={(e) => updateModel('bottom', e.target.value)}
+            placeholder="auto"
+          />
+          <TextField
+            size="small"
+            type="text"
+            value={model.leftValue}
+            onChange={(e) => updateModel('left', e.target.value)}
+            placeholder="auto"
+          />
+        </div>
+      </div>
+      <div
+        className="form-group"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '5px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'start',
+            gap: '5px',
+          }}
+        >
+          <Switch
+            aria-label="Synchronize Values"
+            checked={model.locked}
+            onChange={handleSyncChanged}
+          />
+          <LinkIcon />
+        </div>
+        <Select
+          value={model.unit}
+          size="small"
+          onChange={(e: SelectChangeEvent) =>
+            updateModel('unit', e.target.value as string)
+          }
+        >
           {units.map((unit) => (
-            <option
+            <MenuItem
               key={unit}
               value={unit}
-              selected={model.unit === unit}
             >
               {unit}
-            </option>
+            </MenuItem>
           ))}
-        </select>
+        </Select>
       </div>
     </div>
   )

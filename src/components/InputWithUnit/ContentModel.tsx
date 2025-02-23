@@ -8,5 +8,6 @@ export interface ContentModel {
   left?: string | undefined
   leftValue?: string | undefined
   unit: string
-  [key: string]: string | undefined
+  locked: boolean
+  [key: string]: any
 }
