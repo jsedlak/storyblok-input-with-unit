@@ -1,7 +1,7 @@
 {
   "name": "input-with-unit",
   "private": true,
-  "version": "0.0.4",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,11 +12,7 @@
     "deploy": "npm run build && npx @storyblok/field-plugin-cli@latest deploy"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/material": "^6.4.5",
     "@storyblok/field-plugin": "1.6.0",
-    "@storyblok/mui": "0.2.0",
     "install": "^0.13.0",
     "npm": "^11.1.0",
     "react": "^18.3.1",

@@ -1,21 +1,9 @@
-import './example.css'
-import React, { FunctionComponent } from 'react'
+import './styles.css'
+import { FunctionComponent } from 'react'
 import { useFieldPlugin } from '@storyblok/field-plugin/react'
 import { ContentModel } from './ContentModel'
-import {
-  Box,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Switch,
-  TextField,
-} from '@mui/material'
-import { LinkIcon } from '@storyblok/mui'
 
-const UnitOptions = ['px', 'em', 'rem', '%', 'vw', 'vh']
+const DefaultUnitOptions = ['px', 'em', 'rem', '%', 'vw', 'vh']
 
 function isValidNumber(str: any) {
   return !isNaN(str) && !isNaN(parseFloat(str))
@@ -34,7 +22,8 @@ const InputWithUnit: FunctionComponent = () => {
     return null
   }
 
-  let units = UnitOptions
+  // grab the unit options if they are provided
+  let units = DefaultUnitOptions
   if (data?.options) {
     const optionsKeys = Object.keys(data.options)
 
@@ -43,43 +32,17 @@ const InputWithUnit: FunctionComponent = () => {
     }
   }
 
+  // build the default model
   const DefaultModel: ContentModel = {
-    topValue: '',
-    leftValue: '',
-    rightValue: '',
-    bottomValue: '',
-    locked: true,
+    valueRaw: '',
     unit: units.length > 0 ? units[0] : '',
   }
 
+  // build the model for display, combining default and provided data
   const model = { ...DefaultModel, ...(data.content as ContentModel) }
 
-  const updateModelProps = (newModel: ContentModel) => {
-    newModel.top =
-      newModel.topValue && newModel.topValue.length > 0
-        ? `${newModel.topValue}${newModel.unit}`
-        : undefined
-
-    newModel.left =
-      newModel.leftValue && newModel.leftValue.length > 0
-        ? `${newModel.leftValue}${newModel.unit}`
-        : undefined
-
-    newModel.right =
-      newModel.rightValue && newModel.rightValue.length > 0
-        ? `${newModel.rightValue}${newModel.unit}`
-        : undefined
-
-    newModel.bottom =
-      newModel.bottomValue && newModel.bottomValue.length > 0
-        ? `${newModel.bottomValue}${newModel.unit}`
-        : undefined
-  }
-
-  const updateModel = (
-    prop: 'top' | 'right' | 'left' | 'bottom' | 'unit',
-    val: string,
-  ) => {
+  // updates the model based on callbacks from the ui
+  const updateModel = (prop: 'valueRaw' | 'unit', val: string) => {
     // setup the new model
     const newModel: ContentModel = {
       ...model,
@@ -93,112 +56,41 @@ const InputWithUnit: FunctionComponent = () => {
         return
       }
 
-      if (!model.locked) {
-        newModel[prop + 'Value'] = val
-      } else {
-        newModel.leftValue = val
-        newModel.topValue = val
-        newModel.rightValue = val
-        newModel.bottomValue = val
-      }
+      newModel[prop] = val
     }
 
-    updateModelProps(newModel)
+    newModel.value =
+      newModel.valueRaw && newModel.valueRaw.length > 0
+        ? `${newModel.valueRaw}${newModel.unit}`
+        : undefined
 
-    actions.setContent(newModel)
-  }
-
-  const handleSyncChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newModel = { ...model, locked: event.target.checked }
-
-    if (!event.target.checked) {
-      actions.setContent(newModel)
-      return
-    }
-
-    console.log({ newModel, model })
-    newModel.leftValue =
-      newModel.rightValue =
-      newModel.bottomValue =
-        newModel.topValue
-    updateModelProps(newModel)
     actions.setContent(newModel)
   }
 
   return (
-    <div>
+    <div className="input-with-unit--wrapper">
       <div className="form-group">
         <div className="input-group">
-          <TextField
-            size="small"
-            type="text"
-            value={model.topValue}
-            onChange={(e) => updateModel('top', e.target.value)}
-            placeholder="auto"
-          />
-          <TextField
-            size="small"
-            type="text"
-            value={model.rightValue}
-            onChange={(e) => updateModel('right', e.target.value)}
-            placeholder="auto"
-          />
-          <TextField
-            size="small"
-            type="text"
-            value={model.bottomValue}
-            onChange={(e) => updateModel('bottom', e.target.value)}
-            placeholder="auto"
-          />
-          <TextField
-            size="small"
-            type="text"
-            value={model.leftValue}
-            onChange={(e) => updateModel('left', e.target.value)}
-            placeholder="auto"
-          />
+          <div>
+            <input
+              type="text"
+              value={model.valueRaw}
+              onChange={(e) => updateModel('valueRaw', e.target.value)}
+              placeholder="auto"
+            />
+          </div>
         </div>
-      </div>
-      <div
-        className="form-group"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '5px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'start',
-            gap: '5px',
-          }}
-        >
-          <Switch
-            aria-label="Synchronize Values"
-            checked={model.locked}
-            onChange={handleSyncChanged}
-          />
-          <LinkIcon />
-        </div>
-        <Select
-          value={model.unit}
-          size="small"
-          onChange={(e: SelectChangeEvent) =>
-            updateModel('unit', e.target.value as string)
-          }
-        >
+        <select onChange={(e) => updateModel('unit', e.target.value as string)}>
           {units.map((unit) => (
-            <MenuItem
+            <option
               key={unit}
               value={unit}
+              selected={model.unit === unit}
             >
               {unit}
-            </MenuItem>
+            </option>
           ))}
-        </Select>
+        </select>
       </div>
     </div>
   )
